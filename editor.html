@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Portfolio Editor — 3D Template</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@500;700;800&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#08090C;--panel:#0F1117;--border:#1E2130;--accent:#00E5FF;--text:#E8F0FE;--muted:#6B7FA3;--input:#161922;--success:#00FF9F}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+
+/* TOP BAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:.7rem 1.5rem;background:var(--panel);border-bottom:1px solid var(--border);flex-shrink:0;z-index:10}
+.topbar-logo{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--accent);letter-spacing:.1em}
+.topbar-title{font-size:.85rem;color:var(--muted)}
+.topbar-actions{display:flex;gap:.7rem}
+.btn{padding:.5rem 1.2rem;font-family:'Syne',sans-serif;font-weight:700;font-size:.78rem;border-radius:.3rem;cursor:pointer;border:none;transition:all .2s;letter-spacing:.04em}
+.btn-export{background:var(--accent);color:#050A0F}
+.btn-export:hover{opacity:.9;transform:translateY(-1px)}
+.btn-reset{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.btn-reset:hover{border-color:var(--accent);color:var(--accent)}
+.btn-preview{background:#1E2130;color:var(--text)}
+.btn-preview:hover{background:#252A3A}
+
+/* MAIN LAYOUT */
+.workspace{display:flex;flex:1;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:380px;min-width:320px;background:var(--panel);border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0;display:flex;flex-direction:column}
+.sidebar::-webkit-scrollbar{width:4px}
+.sidebar::-webkit-scrollbar-track{background:transparent}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+.tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.tab{flex:1;padding:.7rem;font-size:.72rem;font-family:'JetBrains Mono',monospace;color:var(--muted);cursor:pointer;text-align:center;border:none;background:transparent;transition:all .2s;letter-spacing:.05em}
+.tab.active{color:var(--accent);border-bottom:2px solid var(--accent)}
+.tab:hover:not(.active){color:var(--text)}
+
+.tab-content{display:none;padding:1.2rem;flex:1}
+.tab-content.active{display:block}
+
+/* FORM ELEMENTS */
+.field{margin-bottom:1.1rem}
+.field label{display:block;font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--muted);letter-spacing:.1em;margin-bottom:.4rem}
+.field input,.field textarea{width:100%;background:var(--input);border:1px solid var(--border);border-radius:.3rem;padding:.55rem .8rem;color:var(--text);font-family:'Syne',sans-serif;font-size:.82rem;transition:border .2s;outline:none;resize:vertical}
+.field input:focus,.field textarea:focus{border-color:var(--accent)}
+.field textarea{min-height:70px;line-height:1.6}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+.color-field{display:flex;align-items:center;gap:.6rem}
+.color-field input[type=color]{width:38px;height:38px;border-radius:.3rem;border:1px solid var(--border);background:none;cursor:pointer;padding:0;flex-shrink:0}
+.color-field input[type=text]{flex:1}
+
+/* SECTION HEADERS */
+.section-hdr{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--accent);letter-spacing:.15em;margin:1.4rem 0 .8rem;padding-bottom:.4rem;border-bottom:1px solid rgba(0,229,255,.1)}
+.section-hdr:first-child{margin-top:0}
+
+/* LISTS */
+.list-item{background:var(--input);border:1px solid var(--border);border-radius:.4rem;padding:.8rem;margin-bottom:.6rem;position:relative}
+.list-item-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem}
+.list-item-title{font-size:.78rem;font-weight:700;color:var(--text)}
+.list-item-actions{display:flex;gap:.4rem}
+.icon-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:.8rem;padding:.15rem .35rem;border-radius:.2rem;transition:all .2s}
+.icon-btn:hover{background:rgba(255,255,255,.05);color:var(--text)}
+.icon-btn.del:hover{color:#ff4d6d}
+.add-btn{width:100%;padding:.6rem;background:rgba(0,229,255,.05);border:1px dashed rgba(0,229,255,.2);border-radius:.4rem;color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:.7rem;cursor:pointer;transition:all .2s;letter-spacing:.05em}
+.add-btn:hover{background:rgba(0,229,255,.1);border-style:solid}
+
+/* SKILL BAR SLIDER */
+.slider-field{display:flex;align-items:center;gap:.8rem}
+.slider-field input[type=range]{flex:1;accent-color:var(--accent)}
+.slider-val{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--accent);width:30px;text-align:right}
+
+/* PREVIEW */
+.preview{flex:1;position:relative;background:#000;overflow:hidden}
+.preview iframe{width:100%;height:100%;border:none}
+.preview-label{position:absolute;bottom:.8rem;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.6);border:1px solid var(--border);padding:.3rem .8rem;border-radius:2rem;font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--muted);pointer-events:none;backdrop-filter:blur(8px)}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--success);color:#050A0F;padding:.6rem 1.2rem;border-radius:.4rem;font-family:'JetBrains Mono',monospace;font-size:.75rem;font-weight:600;z-index:1000;transform:translateY(100px);transition:transform .3s;pointer-events:none}
+.toast.show{transform:translateY(0)}
+
+/* SECTION TABS */
+.chip-group{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.8rem}
+.chip{padding:.3rem .7rem;border:1px solid var(--border);border-radius:2rem;font-size:.68rem;font-family:'JetBrains Mono',monospace;cursor:pointer;background:transparent;color:var(--muted);transition:all .2s}
+.chip.active{border-color:var(--accent);color:var(--accent);background:rgba(0,229,255,.07)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">3D_PORTFOLIO_EDITOR</div>
+  <div class="topbar-title">preview ao vivo</div>
+  <div class="topbar-actions">
+    <button class="btn btn-reset" onclick="resetConfig()">↺ Reset</button>
+    <button class="btn btn-preview" onclick="togglePreview()">⛶ Fullscreen</button>
+    <button class="btn btn-export" onclick="exportPortfolio()">↓ Exportar HTML</button>
+  </div>
+</div>
+
+<div class="workspace">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('identity')">Identidade</button>
+      <button class="tab" onclick="switchTab('skills')">Skills</button>
+      <button class="tab" onclick="switchTab('projects')">Projetos</button>
+      <button class="tab" onclick="switchTab('contact')">Contato</button>
+    </div>
+
+    <!-- IDENTITY TAB -->
+    <div class="tab-content active" id="tab-identity">
+      <div class="section-hdr">// cores & tema</div>
+      <div class="field">
+        <label>COR DE DESTAQUE</label>
+        <div class="color-field">
+          <input type="color" id="c-accent" value="#00E5FF" oninput="syncColor('accent',this.value)">
+          <input type="text" id="c-accent-text" value="#00E5FF" oninput="syncColorFromText('accent',this.value)">
+        </div>
+      </div>
+      <div class="field">
+        <label>COR DE FUNDO</label>
+        <div class="color-field">
+          <input type="color" id="c-dark" value="#050A0F" oninput="syncColor('dark',this.value)">
+          <input type="text" id="c-dark-text" value="#050A0F" oninput="syncColorFromText('dark',this.value)">
+        </div>
+      </div>
+
+      <div class="section-hdr">// informações pessoais</div>
+      <div class="field-row">
+        <div class="field"><label>NOME</label><input id="f-name1" type="text" value="Hector" oninput="liveUpdate()"></div>
+        <div class="field"><label>SOBRENOME</label><input id="f-name2" type="text" value="Marcelo" oninput="liveUpdate()"></div>
+      </div>
+      <div class="field"><label>TAGLINE (subtítulo)</label><input id="f-tagline" type="text" value="Dev em Ascensão" oninput="liveUpdate()"></div>
+      <div class="field"><label>STATUS (ex: Disponível)</label><input id="f-status" type="text" value="Disponível" oninput="liveUpdate()"></div>
+      <div class="field"><label>DESCRIÇÃO (hero)</label><textarea id="f-desc" oninput="liveUpdate()">3º semestre de ADS • Piracaia, SP — construindo o futuro com código, estratégia e muita vontade.</textarea></div>
+
+      <div class="section-hdr">// estatísticas</div>
+      <div id="stats-list"></div>
+      <button class="add-btn" onclick="addStat()">+ Adicionar estatística</button>
+
+      <div class="section-hdr">// sobre mim</div>
+      <div class="field"><label>TÍTULO DA SEÇÃO</label><input id="f-about-title" type="text" value="Quem sou eu?" oninput="liveUpdate()"></div>
+      <div class="field"><label>PARÁGRAFO 1</label><textarea id="f-about-p1" oninput="liveUpdate()">Tenho <strong>22 anos</strong> e sou do interior de São Paulo — <strong>Piracaia</strong>. Estou no <strong>3° semestre de ADS</strong> e cada dia entendo mais porque escolhi essa área.</textarea></div>
+      <div class="field"><label>PARÁGRAFO 2</label><textarea id="f-about-p2" oninput="liveUpdate()">Me identifico como alguém que une <strong>raciocínio técnico com habilidade humana</strong>.</textarea></div>
+      <div class="field"><label>CITAÇÃO</label><textarea id="f-quote" oninput="liveUpdate()">Cada linha de código que escrevo hoje é um tijolo de um projeto maior que ainda estou desenhando.</textarea></div>
+    </div>
+
+    <!-- SKILLS TAB -->
+    <div class="tab-content" id="tab-skills">
+      <div class="section-hdr">// suas tecnologias</div>
+      <div id="skills-list"></div>
+      <button class="add-btn" onclick="addSkill()">+ Adicionar skill</button>
+    </div>
+
+    <!-- PROJECTS TAB -->
+    <div class="tab-content" id="tab-projects">
+      <div class="section-hdr">// seus projetos</div>
+      <div id="projects-list"></div>
+      <button class="add-btn" onclick="addProject()">+ Adicionar projeto</button>
+    </div>
+
+    <!-- CONTACT TAB -->
+    <div class="tab-content" id="tab-contact">
+      <div class="section-hdr">// seção de contato</div>
+      <div class="field"><label>TÍTULO</label><input id="f-contact-title" type="text" value="Vamos Conversar?" oninput="liveUpdate()"></div>
+      <div class="field"><label>DESCRIÇÃO</label><textarea id="f-contact-desc" oninput="liveUpdate()">Aberto a parcerias, projetos, estágios e trocas de conhecimento.</textarea></div>
+      <div class="section-hdr">// links de contato</div>
+      <div id="contact-links-list"></div>
+      <button class="add-btn" onclick="addContactLink()">+ Adicionar link</button>
+      <div class="section-hdr">// rodapé</div>
+      <div class="field"><label>TEXTO DO RODAPÉ</label><textarea id="f-footer" oninput="liveUpdate()">Construído com código, estratégia e muita vontade.</textarea></div>
+    </div>
+  </div>
+
+  <!-- PREVIEW -->
+  <div class="preview">
+    <iframe id="preview-frame" src="portfolio.html"></iframe>
+    <div class="preview-label">preview ao vivo</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══ STATE ═══
+const DEFAULT = {
+  accent:"#00E5FF", dark:"#050A0F",
+  name:["Hector","Marcelo"], tagline:"Dev em Ascensão", status:"Disponível",
+  description:"3º semestre de ADS • Piracaia, SP — construindo o futuro com código, estratégia e muita vontade.",
+  stats:[{num:"22",label:"Anos de idade"},{num:"3°",label:"Semestre ADS"},{num:"∞",label:"Ambição"}],
+  about:{
+    title:"Quem sou eu?",
+    paragraphs:["Tenho <strong>22 anos</strong> e sou do interior de São Paulo — <strong>Piracaia</strong>. Estou no <strong>3° semestre de ADS</strong> e cada dia entendo mais porque escolhi essa área.","Me identifico como alguém que une <strong>raciocínio técnico com habilidade humana</strong>."],
+    quote:"Cada linha de código que escrevo hoje é um tijolo de um projeto maior que ainda estou desenhando.",
+    cards:[{icon:"📍",title:"Piracaia, SP",text:"Interior de São Paulo. Foco total e acesso ao mundo digital."},{icon:"🎓",title:"ADS — 3° Sem.",text:"Análise e Desenvolvimento de Sistemas em andamento."},{icon:"⚡",title:"Automação",text:"IIoT, SCADA e sistemas industriais."},{icon:"🤝",title:"Comunicação",text:"Soft skills que complementam o lado técnico."}]
+  },
+  skills:[{name:"JavaScript",pct:75},{name:"Python",pct:70},{name:"Node.js",pct:65},{name:"HTML/CSS",pct:85},{name:"React",pct:55},{name:"SQL",pct:60}],
+  projects:[
+    {tag:"WEB",title:"Guia Turístico Piracaia",desc:"Landing page para prefeitura com cadastro de pontos turísticos e planos de assinatura.",tech:["HTML","CSS","JS","Node.js"],github:"#",demo:"#"},
+    {tag:"AUTOMAÇÃO",title:"Sistema IIoT",desc:"Monitoramento industrial em tempo real com dashboard de dados de sensores.",tech:["Python","MQTT","Grafana"],github:"#",demo:"#"},
+    {tag:"FULLSTACK",title:"Portfólio 3D",desc:"Este portfólio — feito com Three.js, efeitos 3D e design futurista.",tech:["Three.js","HTML","CSS","JS"],github:"#",demo:"#"}
+  ],
+  contact:{
+    title:"Vamos Conversar?",desc:"Aberto a parcerias, projetos, estágios e trocas de conhecimento.",
+    links:[{label:"✉️",text:"email@exemplo.com",href:"mailto:email@exemplo.com"},{label:"⬡",text:"GitHub",href:"https://github.com"},{label:"in",text:"LinkedIn",href:"https://linkedin.com"}]
+  },
+  footer:"Construído com código, estratégia e muita vontade."
+};
+
+let state = JSON.parse(JSON.stringify(DEFAULT));
+
+// ═══ TABS ═══
+function switchTab(id){
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    const ids=['identity','skills','projects','contact'];
+    t.classList.toggle('active',ids[i]===id);
+  });
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+}
+
+// ═══ COLOR SYNC ═══
+function syncColor(key, val){
+  document.getElementById(`c-${key}-text`).value=val;
+  state[key]=val;
+  liveUpdate();
+}
+function syncColorFromText(key, val){
+  if(/^#[0-9A-Fa-f]{6}$/.test(val)){
+    document.getElementById(`c-${key}`).value=val;
+    state[key]=val;
+    liveUpdate();
+  }
+}
+
+// ═══ READ FORM → STATE ═══
+function readForm(){
+  state.accent = document.getElementById('c-accent').value;
+  state.dark = document.getElementById('c-dark').value;
+  state.name = [document.getElementById('f-name1').value, document.getElementById('f-name2').value];
+  state.tagline = document.getElementById('f-tagline').value;
+  state.status = document.getElementById('f-status').value;
+  state.description = document.getElementById('f-desc').value;
+  state.about.title = document.getElementById('f-about-title').value;
+  state.about.paragraphs = [document.getElementById('f-about-p1').value, document.getElementById('f-about-p2').value];
+  state.about.quote = document.getElementById('f-quote').value;
+  // stats, skills, projects, contact read from their own lists
+  state.contact.title = document.getElementById('f-contact-title').value;
+  state.contact.desc = document.getElementById('f-contact-desc').value;
+  state.footer = document.getElementById('f-footer').value;
+}
+
+// ═══ LIVE UPDATE ═══
+let updateTimer;
+function liveUpdate(){
+  clearTimeout(updateTimer);
+  updateTimer = setTimeout(()=>{
+    readForm();
+    const iframe = document.getElementById('preview-frame');
+    iframe.contentWindow.postMessage({type:'UPDATE_CONFIG', config: state}, '*');
+  }, 150);
+}
+
+// ═══ STATS LIST ═══
+function renderStats(){
+  const el = document.getElementById('stats-list');
+  el.innerHTML = state.stats.map((s,i)=>`
+    <div class="list-item">
+      <div class="list-item-header">
+        <div class="list-item-title">Stat ${i+1}</div>
+        <button class="icon-btn del" onclick="removeStat(${i})">✕</button>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>NÚMERO</label><input type="text" value="${s.num}" oninput="state.stats[${i}].num=this.value;liveUpdate()"></div>
+        <div class="field"><label>LABEL</label><input type="text" value="${s.label}" oninput="state.stats[${i}].label=this.value;liveUpdate()"></div>
+      </div>
+    </div>`).join('');
+}
+function addStat(){ state.stats.push({num:"#",label:"Label"});renderStats();liveUpdate() }
+function removeStat(i){ state.stats.splice(i,1);renderStats();liveUpdate() }
+
+// ═══ SKILLS LIST ═══
+function renderSkills(){
+  const el = document.getElementById('skills-list');
+  el.innerHTML = state.skills.map((s,i)=>`
+    <div class="list-item">
+      <div class="list-item-header">
+        <div class="list-item-title">${s.name||'Skill'}</div>
+        <button class="icon-btn del" onclick="removeSkill(${i})">✕</button>
+      </div>
+      <div class="field"><label>TECNOLOGIA</label><input type="text" value="${s.name}" oninput="state.skills[${i}].name=this.value;renderSkills();liveUpdate()"></div>
+      <div class="field"><label>NÍVEL</label>
+        <div class="slider-field">
+          <input type="range" min="0" max="100" value="${s.pct}" oninput="state.skills[${i}].pct=+this.value;this.nextElementSibling.textContent=this.value+'%';liveUpdate()">
+          <span class="slider-val">${s.pct}%</span>
+        </div>
+      </div>
+    </div>`).join('');
+}
+function addSkill(){ state.skills.push({name:"Nova Skill",pct:60});renderSkills();liveUpdate() }
+function removeSkill(i){ state.skills.splice(i,1);renderSkills();liveUpdate() }
+
+// ═══ PROJECTS LIST ═══
+function renderProjects(){
+  const el = document.getElementById('projects-list');
+  el.innerHTML = state.projects.map((p,i)=>`
+    <div class="list-item">
+      <div class="list-item-header">
+        <div class="list-item-title">${p.title||'Projeto'}</div>
+        <button class="icon-btn del" onclick="removeProject(${i})">✕</button>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>TAG</label><input type="text" value="${p.tag}" oninput="state.projects[${i}].tag=this.value;liveUpdate()"></div>
+        <div class="field"><label>TÍTULO</label><input type="text" value="${p.title}" oninput="state.projects[${i}].title=this.value;renderProjects();liveUpdate()"></div>
+      </div>
+      <div class="field"><label>DESCRIÇÃO</label><textarea oninput="state.projects[${i}].desc=this.value;liveUpdate()">${p.desc}</textarea></div>
+      <div class="field"><label>TECNOLOGIAS (separar por vírgula)</label><input type="text" value="${p.tech.join(', ')}" oninput="state.projects[${i}].tech=this.value.split(',').map(t=>t.trim());liveUpdate()"></div>
+      <div class="field-row">
+        <div class="field"><label>GITHUB URL</label><input type="text" value="${p.github}" oninput="state.projects[${i}].github=this.value;liveUpdate()"></div>
+        <div class="field"><label>DEMO URL</label><input type="text" value="${p.demo}" oninput="state.projects[${i}].demo=this.value;liveUpdate()"></div>
+      </div>
+    </div>`).join('');
+}
+function addProject(){ state.projects.push({tag:"WEB",title:"Novo Projeto",desc:"Descrição do projeto.",tech:["HTML","CSS"],github:"#",demo:"#"});renderProjects();liveUpdate() }
+function removeProject(i){ state.projects.splice(i,1);renderProjects();liveUpdate() }
+
+// ═══ CONTACT LINKS ═══
+function renderContactLinks(){
+  const el = document.getElementById('contact-links-list');
+  el.innerHTML = state.contact.links.map((l,i)=>`
+    <div class="list-item">
+      <div class="list-item-header">
+        <div class="list-item-title">${l.text||'Link'}</div>
+        <button class="icon-btn del" onclick="removeContactLink(${i})">✕</button>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>EMOJI / ÍCONE</label><input type="text" value="${l.label}" oninput="state.contact.links[${i}].label=this.value;liveUpdate()"></div>
+        <div class="field"><label>TEXTO</label><input type="text" value="${l.text}" oninput="state.contact.links[${i}].text=this.value;renderContactLinks();liveUpdate()"></div>
+      </div>
+      <div class="field"><label>URL / HREF</label><input type="text" value="${l.href}" oninput="state.contact.links[${i}].href=this.value;liveUpdate()"></div>
+    </div>`).join('');
+}
+function addContactLink(){ state.contact.links.push({label:"🔗",text:"Meu Link",href:"https://"});renderContactLinks();liveUpdate() }
+function removeContactLink(i){ state.contact.links.splice(i,1);renderContactLinks();liveUpdate() }
+
+// ═══ RESET ═══
+function resetConfig(){ state=JSON.parse(JSON.stringify(DEFAULT));initForms();liveUpdate() }
+
+// ═══ EXPORT ═══
+function exportPortfolio(){
+  const iframe = document.getElementById('preview-frame');
+  // Fetch the portfolio template and inject the current config
+  fetch('portfolio.html')
+    .then(r=>r.text())
+    .then(html=>{
+      const configStr = `const CONFIG = ${JSON.stringify(state,null,2)};`;
+      const exported = html.replace(/const CONFIG = \{[\s\S]*?\};/, configStr);
+      const blob = new Blob([exported],{type:'text/html'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `portfolio-${state.name.join('-').toLowerCase()}.html`;
+      a.click();
+      showToast('✓ portfolio exportado!');
+    });
+}
+
+// ═══ TOAST ═══
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ═══ FULLSCREEN PREVIEW ═══
+function togglePreview(){
+  const frame = document.getElementById('preview-frame');
+  if(document.fullscreenElement){document.exitFullscreen()}
+  else{frame.requestFullscreen()}
+}
+
+// ═══ INIT ═══
+function initForms(){
+  document.getElementById('c-accent').value=state.accent;
+  document.getElementById('c-accent-text').value=state.accent;
+  document.getElementById('c-dark').value=state.dark;
+  document.getElementById('c-dark-text').value=state.dark;
+  document.getElementById('f-name1').value=state.name[0];
+  document.getElementById('f-name2').value=state.name[1];
+  document.getElementById('f-tagline').value=state.tagline;
+  document.getElementById('f-status').value=state.status;
+  document.getElementById('f-desc').value=state.description;
+  document.getElementById('f-about-title').value=state.about.title;
+  document.getElementById('f-about-p1').value=state.about.paragraphs[0];
+  document.getElementById('f-about-p2').value=state.about.paragraphs[1];
+  document.getElementById('f-quote').value=state.about.quote;
+  document.getElementById('f-contact-title').value=state.contact.title;
+  document.getElementById('f-contact-desc').value=state.contact.desc;
+  document.getElementById('f-footer').value=state.footer;
+  renderStats(); renderSkills(); renderProjects(); renderContactLinks();
+}
+
+window.addEventListener('load',()=>{
+  initForms();
+  // wait for iframe to load then send initial config
+  document.getElementById('preview-frame').addEventListener('load',()=>{
+    setTimeout(liveUpdate, 300);
+  });
+});
+</script>
+</body>
+</html>
